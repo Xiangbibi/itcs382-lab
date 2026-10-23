@@ -99,52 +99,81 @@ Table 3. What you did with each SonarQube issue in Table 1
 | 12 | Fixed | 73ec65e |
 | 13 | Fixed | 73ec65e |
 
-Number of SonarQube issues that remain after your fixes: TODO
+Number of SonarQube issues that remain after your fixes: 7
+TODO
 
 The two design problems that you fixed
 
 | Design problem (course term) | What you changed | Commit |
 | --- | --- | --- |
-| TODO | TODO | TODO |
-| TODO | TODO | TODO |
+| Non-private field (weak encapsulation): Parcel.status was public | Made status private in Parcel.java and added getStatus() and setStatus(); ParcelService now uses them | 0248ccb |
+| Control coupling: the boolean flag forStaff in printParcels decided what the method did | Split printParcels(boolean) into printStaffParcels() and printWaitingParcels(), and changed the two calls in Main.java | 1297e0e |
 
 Output of the program after your fixes, for the commands `store P1 6501 2`, `pickup P1 5` and `staff`, and the content of parcels.csv:
 
 ```text
-TODO
+Commands: store <code> <studentId> <size 1-3>, pickup <code> <days>, list, staff, quit
+store P1 6501 2
+SMS to 6501: parcel P1 is in locker 2
+Locker 2
+pickup P1 5
+Fee: 30.0
+staff
+P1 6501 PICKED_UP
+Free lockers: 3
+quit
+
+parcels.csv:
+P1,PICKED_UP
 ```
 
 ## Task 4. AI-generated poor and good designs
 
-| Item | bikeshare-poor | bikeshare-good |
-| --- | --- | --- |
-| Date | | |
-| AI tool and exact model | | |
-| Prompt (B or C as given, or your changed prompt in full) | | |
-| Builds with mvn package (yes or no) | | |
-| Number of classes, interfaces, enums and records | | |
-| SonarQube issues, total | | |
-| SonarQube issues, by rule | | |
-| AI review findings in Check 1 | | |
-| AI review findings in Check 2 | | |
-| Review output file in the reviews folder | | |
+1. Files read: `bikeshare-good/src/main/java/com/bikeshare/App.java`, `Bike.java`, `BikeShareService.java`, `CliMenu.java`, `CsvRideRepository.java`, `MemberType.java`, `Rental.java`, `RideRepository.java`, `Station.java`.
+
+2.
+
+| No. | Check | Code location (file:line) | Finding | Severity | Suggested fix |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Check 1 | App.java:10 | The `Scanner` on System.in is never closed (resource leak warning). | Note | Wrap it in try-with-resources, or keep it open on purpose and add a comment. |
+| 2 | Check 1 | CsvRideRepository.java:27 | The member ID typed by the user is written to rides.csv without escaping, so an ID with a comma or a new line breaks the columns of the file (probable bug). | Should fix | Reject or quote IDs that contain a comma, a quote or a new line. |
+| 3 | Check 1 | CliMenu.java:43, 46, 69 | A wrong station or member type makes `valueOf` fail, and the catch blocks at lines 51 and 81 show Java's raw message ("No enum constant com.bikeshare.Station.X") to the user. | Note | Catch the error at each `valueOf` and print "Unknown station" or "Unknown member type" with the allowed values. |
+| 4 | Check 1 | CliMenu.java:40; BikeShareService.java:31 | An empty member ID is accepted, so a rental can be stored under an empty string. | Note | Reject a blank member ID in `rentBike`. |
+| 5 | Check 2 | RideRepository.java:6; BikeShareService.java:56-64; CsvRideRepository.java:18 | `saveRide` takes seven positional parameters, so a change of order or count must be made in three places (connascence of position). The member type and the stations are passed as Strings through `name()`, which drops the enum type (connascence of type). | Should fix | Pass one `Ride` record instead of seven loose values. |
+| 6 | Check 2 | BikeShareService.java:54, 57, 59, 62 | The service reaches through `Rental` with `rental.getBike().getId()` and `rental.getMemberType().calculateFee(...)`, which is strong coupling. | Note | Add `getBikeId()` and `calculateFee()` to `Rental`. |
+| 7 | Check 2 | CliMenu.java:62, 74 | The menu fetches the whole `Rental` (stamp coupling) only to read the bike ID through `rental.getBike().getId()`. It checks for an active rental although `returnBike` checks it again (BikeShareService.java:48-51), and it depends on five classes (BikeShareService, Rental, Bike, MemberType, Station). | Should fix | Let `returnBike` return a small result with the bike ID and the fee, so the menu needs neither `getActiveRental` nor `Rental`. |
+| 8 | Check 2 | CliMenu.java:42, 45, 68 | Station names and member type names are typed by hand in the prompts ("LIBRARY / CANTEEN / DORM", "STUDENT / STAFF") and repeat the enums, so a new station or member type also needs these strings edited (connascence of convention). | Should fix | Build the prompt text from `Station.values()` and `MemberType.values()`. |
+| 9 | Check 2 | RideRepository.java:3, 6; CliMenu.java:82-83 | The interface declares `IOException`, so the file detail leaks to `returnBike` (BikeShareService.java:44) and to the menu. The menu message hard-codes "rides.csv" although App.java:8 chooses the file name (connascence of meaning). | Note | Wrap the error in an own exception and let the repository name the file. |
+
+3. Number of findings: Check 1: 4. Check 2: 5.
+
+Not found: methods with procedural or weaker cohesion; classes with weak class cohesion; fields that are not private; operations that return an internal collection; unused imports, fields or parameters; empty blocks; methods that are too long (the longest, `handleReturn`, has 29 lines); common or content coupling.
 
 4.1 Did SonarQube report any cohesion or coupling problem in bikeshare-poor? Quote the rule and the message if it did.
+Answer: No. SonarQube reported only code-quality issues in bikeshare-poor and none of them is about cohesion or coupling. The poor design (one class that holds the menu, the fee rules, the bike records and the file saving, public static fields, int codes, a boolean flag) is not reported by any rule.
 
 4.2 Did the AI review tell the two versions apart? Give one finding for bikeshare-poor that does not appear for bikeshare-good.
+Answer: Yes, the AI review told the two versions apart.  In bikeshare-poor it reported weak class cohesion, because one class holds the menu, the fee rules, the bike records and the file saving. For bikeshare-good it reported no weak cohesion and no non-private field, and its findings were small points such as the seven positional parameters of saveRide.
 
-4.3 Which version would you rather extend with a new member type, such as a visitor who pays 4 baht per minute, and why?
+4.3 Which version would you rather extend with a new member type, such as a visitor who pays 4 baht per minute, and why? 
+Answer: I would rather extend bikeshare-good. To add a visitor who pays 4 baht per minute, I only add one constant to the enum, VISITOR(4), in MemberType.java. The fee rule already lives in MemberType.calculateFee, and the menu and the service need no change except the text of the prompt. In bikeshare-poor the member type is an int code and the fee rules, the menu and the file saving are in one class, so I would have to find every place that tests the code (the menu, the fee calculation and the saving), add a new number, and check that I did not miss one. The good design keeps the fee rule in one place, so a new member type is a small change with a low chance of breaking other code.
 
 ## Task 5. Reflection
 
 5.1 What does SonarQube check, and what does it not check? Answer with examples from this lab.
+Answer: SonarQube checks code-quality rules on one file at a time, such as a string compared with == (java:S4973), a FileWriter that is never closed (java:S2095), an unused import (java:S1128) and an empty catch block (java:S108). It does not check design quality: it did not report that ParcelService has weak class cohesion, that the size codes 1, 2 and 3 are shared by three classes, or that bikeshare-poor puts everything in one class. It also does not run the program, so only my test run showed that the fee was 0.0 and parcels.csv was empty.
 
 5.2 When should you not trust the AI review? Give an example from this lab.
+Answer: I should not trust the AI review without checking it, because it gave wrong line numbers (often 1 to 5 lines off) and some findings that were wrong or too vague. For example, it called the whole Parcel parameter of storeParcel stamp coupling, but the method uses the size, code, student ID and status. It also said that the string "STORED" is repeated many times, but it appears only twice. I trust a finding only after I open the file at the line and compare it with the code, the SonarQube result or the output of the program.
 
 5.3 What will you do differently in Project Phase 2 after this lab?
+Answer: In Project Phase 2 I will run SonarQube while I write the code and fix the issues in small commits, instead of fixing everything at the end. I will use the AI review for design problems such as cohesion, coupling and magic number codes, and I will check every finding against the code before I accept it. I will also record the AI tool, the model and the date at the time of each use, so the declaration is easy to write.
 
 ## AI usage declaration
 
 | AI tool and exact model | Purpose | Files or parts that it produced or changed | How you checked its output |
+| AI tool and exact model | Purpose | Files or parts that it produced or changed | How you checked its output |
 | --- | --- | --- | --- |
-| Gemini 3.8 Flash| review code ParcelPoint with Prompt A|reviews/parcelpoint-review.md| Open the file at the line where the AI ​​failed to provide the actual code, and include the SonarQube results as well as the program execution output. |
+| Gemini 3.8 Flash | Review of ParcelPoint with Prompt A (Task 2) | reviews/parcelpoint-review.md | Opened each file at the line given, compared with the code, SonarQube and the program output |
+| Gemini 3.8 Flash | Wrote the BikeShare code with Prompts B and C (Task 4) | bikeshare-poor, bikeshare-good | Ran mvn package and the program, and read the code |
+| Claude Sonnet 5.5 | Review of bikeshare-good with Prompt A (Task 4); help with setup, fixes and the wording of the report | reviews/bikeshare-good-review.md (and reviews/bikeshare-poor-review.md ถ้าให้ Claude รีวิว poor); code fixes in parcelpoint and report text | Built and ran the program after every fix, checked the line numbers and findings against the files |
