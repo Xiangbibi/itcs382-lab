@@ -89,8 +89,8 @@ Table 3. What you did with each SonarQube issue in Table 1
 | 2 | Kept | Printing to the console is the output of a command-line program. |
 | 3 | Kept | Printing to the console is the output of a command-line program. |
 | 4 | Kept | Printing to the console is the output of a command-line program. |
-| 5 | Fixed | TODO (รอบ 3) |
-| 6 | Fixed | TODO (รอบ 3) |
+| 5 | Fixed |46eec60 |
+| 6 | Fixed | 46eec60 |
 | 7 | Fixed | TODO (รอบ 4) |
 | 8 | Kept | Printing to the console is the output of a command-line program. |
 | 9 | Fixed | 0ce2fc6 |
