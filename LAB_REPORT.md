@@ -78,27 +78,40 @@ Table 2. All findings on the starter code
 java:S106, "Replace this use of System.out by a logger", which SonarQube reported 7 times in Main.java and ParcelService.java. The AI review did not mention it.
 2.3 Name one AI finding that was wrong or too vague, and explain why. If every finding was right, explain how you checked them.
 Finding 13 said that storeParcel has stamp coupling because it takes a whole Parcel. This is not a real problem, because the method uses the size, the code, the student ID and the status of the parcel, so it needs almost the whole object. I checked each AI finding by opening the file at the line that the AI gave and comparing it with the code. I also compared the findings with the SonarQube results and with the real output of the program (Fee: 0.0, status still STORED, empty parcels.csv). Many line numbers given by the AI were wrong by 1 to 5 lines, so I used the real line numbers in the table.
+
 ## Task 3. Fix and check
 
 Table 3. What you did with each SonarQube issue in Table 1
 
 | No. in Table 1 | Fixed or kept | Commit, or the reason for keeping it |
 | --- | --- | --- |
-| 1 | | |
+| 1 | Kept | Printing to the console is the output of a command-line program. |
+| 2 | Kept | Printing to the console is the output of a command-line program. |
+| 3 | Kept | Printing to the console is the output of a command-line program. |
+| 4 | Kept | Printing to the console is the output of a command-line program. |
+| 5 | Fixed | TODO (รอบ 3) |
+| 6 | Fixed | TODO (รอบ 3) |
+| 7 | Fixed | TODO (รอบ 4) |
+| 8 | Kept | Printing to the console is the output of a command-line program. |
+| 9 | Fixed | 0ce2fc6 |
+| 10 | Kept | Printing to the console is the output of a command-line program. |
+| 11 | Kept | Printing to the console is the output of a command-line program. |
+| 12 | Fixed | TODO (รอบ 2) |
+| 13 | Fixed | TODO (รอบ 2) |
 
-Number of SonarQube issues that remain after your fixes:
+Number of SonarQube issues that remain after your fixes: TODO
 
 The two design problems that you fixed
 
 | Design problem (course term) | What you changed | Commit |
 | --- | --- | --- |
-| | | |
-| | | |
+| TODO | TODO | TODO |
+| TODO | TODO | TODO |
 
 Output of the program after your fixes, for the commands `store P1 6501 2`, `pickup P1 5` and `staff`, and the content of parcels.csv:
 
 ```text
-
+TODO
 ```
 
 ## Task 4. AI-generated poor and good designs
