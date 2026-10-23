@@ -96,8 +96,8 @@ Table 3. What you did with each SonarQube issue in Table 1
 | 9 | Fixed | 0ce2fc6 |
 | 10 | Kept | Printing to the console is the output of a command-line program. |
 | 11 | Kept | Printing to the console is the output of a command-line program. |
-| 12 | Fixed | TODO (รอบ 2) |
-| 13 | Fixed | TODO (รอบ 2) |
+| 12 | Fixed | 73ec65e |
+| 13 | Fixed | 73ec65e |
 
 Number of SonarQube issues that remain after your fixes: TODO
 
