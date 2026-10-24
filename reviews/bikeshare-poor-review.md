@@ -1,0 +1,24 @@
+1. Files read: `bikeshare-poor/src/main/java/com/bikeshare/BikeShareApp.java`.
+
+2.
+
+| No. | Check | Code location (file:line) | Finding | Severity | Suggested fix |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Check 1 | BikeShareApp.java:62-154 | `handleRideTransaction` is too long and too complex: it has 93 lines and about 15 branches (nested if, try and catch), so it is hard to read. | Should fix | Split it into one method for renting and one method for returning, and move the parsing of input into helper methods. |
+| 2 | Check 1 | BikeShareApp.java:138-139 | The rates 2 and 3 baht per minute are magic numbers inside the method, and the rule `? 2 : 3` gives staff rate to every code that is not 1. | Note | Keep each rate in a named constant or in the member type itself. |
+| 3 | Check 1 | BikeShareApp.java:144-152, 161 | The receipt is printed before the ride is saved, and a failure to write rides.csv is only printed to System.err, so the member sees a finished ride that may not be in the file (probable bug). | Should fix | Save the ride first, or report the failure to the caller so that it can tell the member. |
+| 4 | Check 1 | BikeShareApp.java:68 | The member ID is read with `Integer.parseInt`, so IDs with leading zeros lose them (0012 becomes 12), and IDs with letters or more than ten digits are rejected. | Note | Keep the member ID as a String. |
+| 5 | Check 1 | BikeShareApp.java:91, 116 | The literal "Error: Unknown station." is repeated twice. | Note | Define one constant for the message. |
+| 6 | Check 2 | BikeShareApp.java:62-154 | Logical cohesion: the boolean `isRent` selects between two different jobs (renting and returning) in one method, and the method also calculates the fee, prints the receipt and calls the file saving. | Must fix | Make `rentBike` and `returnBike` separate methods, and move the fee and the receipt out of them. |
+| 7 | Check 2 | BikeShareApp.java:25-56 | Temporal cohesion: `main` first fills the station data (lines 27-29) and then runs the menu loop, which are two different jobs that only follow each other in time. | Note | Move the filling of the stations into its own method or class. |
+| 8 | Check 2 | BikeShareApp.java:13-164 | Weak class cohesion: one class holds the menu, the bike inventory, the rental records, the fee rule, the receipt and the CSV saving, which are six different responsibilities. | Must fix | Split the class by responsibility, for example a menu class, a service class with the rules and a class that saves the file. |
+| 9 | Check 2 | BikeShareApp.java:47, 50, 62 | Control coupling: the caller passes a boolean flag (`true` or `false`) to `handleRideTransaction`, and the flag decides which code runs inside it. | Must fix | Call two separate methods instead of passing the flag. |
+| 10 | Check 2 | BikeShareApp.java:20, 23 | Common coupling: `STATIONS` and `ACTIVE_RENTALS` are public static fields that hold mutable maps, so any code in the program can change the shared data, and the fields are not private. | Must fix | Make the maps private fields of a service object and give only the methods that are needed. |
+| 11 | Check 2 | BikeShareApp.java:16-17, 78, 100, 138, 158 | Connascence of convention: the member type is an int code (1 and 2) that the menu, the rental record, the fee rule and the file must all read in the same way, and the file stores the bare number. | Should fix | Use an enum for the member type, with the rate inside it. |
+| 12 | Check 2 | BikeShareApp.java:23, 100, 134-135 | Connascence of position: the rental is stored in an `int[]` where index 0 means the member type and index 1 means the member ID, so every reader must know the order. | Should fix | Store the rental in a small class or record with named fields. |
+| 13 | Check 2 | BikeShareApp.java:27-29, 87, 112 | Connascence of convention: the station names "Library", "Canteen" and "Dorm" are typed as Strings in the setup and again in the prompts, and a different spelling or case is rejected as unknown. | Should fix | Use an enum for the stations and build the prompt text from its values. |
+| 14 | Check 2 | BikeShareApp.java:152, 156 | Connascence of position: `saveRideToFile` takes six parameters in a fixed order (two of them are ints that can be swapped without a compile error), and the file name "rides.csv" is typed inside it (line 157). | Note | Pass one ride object, and give the file name to the class that saves. |
+
+3. Number of findings: Check 1: 5. Check 2: 9.
+
+Not found: resources that are never closed (the Scanner and the writer use try-with-resources); objects compared with `==` instead of `equals()`; unused imports, fields or parameters; empty blocks; operations that return an internal collection (no getters exist, the maps are public fields instead, see No. 10); content coupling; classes that depend on many other classes (the class uses only classes of the JDK).

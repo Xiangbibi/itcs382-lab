@@ -10,7 +10,7 @@ Repository URL: https://github.com/Xiangbibi/itcs382-lab
 | Maven | Apache Maven 3.10.0  |
 | IDE | Visual Studio Code 1.141.0 |
 | SonarQube for IDE | 6.1.1 |
-| AI tool and exact model | Gemini 3.8 Flash |
+| AI tool and exact model | Gemini 3.8 Flash; Claude Sonnet 5.5 |
 
 ## Task 1. SonarQube on the starter code
 
@@ -75,8 +75,11 @@ Table 2. All findings on the starter code
 (1) ParcelService has weak class cohesion (row 11): it manages lockers, calculates fees, prints to the console and writes the CSV file. (2) The size codes 1, 2 and 3 are connascence of convention (row 17): Parcel, Locker and ParcelService must all read the numbers in the same way, and nothing in the code states the meaning. SonarQube reported neither of them, because they are design problems and not code-quality rules.
 
 2.2 Name one problem that only SonarQube found, or write none.
+
 java:S106, "Replace this use of System.out by a logger", which SonarQube reported 7 times in Main.java and ParcelService.java. The AI review did not mention it.
+
 2.3 Name one AI finding that was wrong or too vague, and explain why. If every finding was right, explain how you checked them.
+
 Finding 13 said that storeParcel has stamp coupling because it takes a whole Parcel. This is not a real problem, because the method uses the size, the code, the student ID and the status of the parcel, so it needs almost the whole object. I checked each AI finding by opening the file at the line that the AI gave and comparing it with the code. I also compared the findings with the SonarQube results and with the real output of the program (Fee: 0.0, status still STORED, empty parcels.csv). Many line numbers given by the AI were wrong by 1 to 5 lines, so I used the real line numbers in the table.
 
 ## Task 3. Fix and check
@@ -100,7 +103,7 @@ Table 3. What you did with each SonarQube issue in Table 1
 | 13 | Fixed | 73ec65e |
 
 Number of SonarQube issues that remain after your fixes: 7
-TODO
+
 
 The two design problems that you fixed
 
@@ -129,34 +132,33 @@ P1,PICKED_UP
 
 ## Task 4. AI-generated poor and good designs
 
-1. Files read: `bikeshare-good/src/main/java/com/bikeshare/App.java`, `Bike.java`, `BikeShareService.java`, `CliMenu.java`, `CsvRideRepository.java`, `MemberType.java`, `Rental.java`, `RideRepository.java`, `Station.java`.
 
-2.
-
-| No. | Check | Code location (file:line) | Finding | Severity | Suggested fix |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Check 1 | App.java:10 | The `Scanner` on System.in is never closed (resource leak warning). | Note | Wrap it in try-with-resources, or keep it open on purpose and add a comment. |
-| 2 | Check 1 | CsvRideRepository.java:27 | The member ID typed by the user is written to rides.csv without escaping, so an ID with a comma or a new line breaks the columns of the file (probable bug). | Should fix | Reject or quote IDs that contain a comma, a quote or a new line. |
-| 3 | Check 1 | CliMenu.java:43, 46, 69 | A wrong station or member type makes `valueOf` fail, and the catch blocks at lines 51 and 81 show Java's raw message ("No enum constant com.bikeshare.Station.X") to the user. | Note | Catch the error at each `valueOf` and print "Unknown station" or "Unknown member type" with the allowed values. |
-| 4 | Check 1 | CliMenu.java:40; BikeShareService.java:31 | An empty member ID is accepted, so a rental can be stored under an empty string. | Note | Reject a blank member ID in `rentBike`. |
-| 5 | Check 2 | RideRepository.java:6; BikeShareService.java:56-64; CsvRideRepository.java:18 | `saveRide` takes seven positional parameters, so a change of order or count must be made in three places (connascence of position). The member type and the stations are passed as Strings through `name()`, which drops the enum type (connascence of type). | Should fix | Pass one `Ride` record instead of seven loose values. |
-| 6 | Check 2 | BikeShareService.java:54, 57, 59, 62 | The service reaches through `Rental` with `rental.getBike().getId()` and `rental.getMemberType().calculateFee(...)`, which is strong coupling. | Note | Add `getBikeId()` and `calculateFee()` to `Rental`. |
-| 7 | Check 2 | CliMenu.java:62, 74 | The menu fetches the whole `Rental` (stamp coupling) only to read the bike ID through `rental.getBike().getId()`. It checks for an active rental although `returnBike` checks it again (BikeShareService.java:48-51), and it depends on five classes (BikeShareService, Rental, Bike, MemberType, Station). | Should fix | Let `returnBike` return a small result with the bike ID and the fee, so the menu needs neither `getActiveRental` nor `Rental`. |
-| 8 | Check 2 | CliMenu.java:42, 45, 68 | Station names and member type names are typed by hand in the prompts ("LIBRARY / CANTEEN / DORM", "STUDENT / STAFF") and repeat the enums, so a new station or member type also needs these strings edited (connascence of convention). | Should fix | Build the prompt text from `Station.values()` and `MemberType.values()`. |
-| 9 | Check 2 | RideRepository.java:3, 6; CliMenu.java:82-83 | The interface declares `IOException`, so the file detail leaks to `returnBike` (BikeShareService.java:44) and to the menu. The menu message hard-codes "rides.csv" although App.java:8 chooses the file name (connascence of meaning). | Note | Wrap the error in an own exception and let the repository name the file. |
-
-3. Number of findings: Check 1: 4. Check 2: 5.
-
-Not found: methods with procedural or weaker cohesion; classes with weak class cohesion; fields that are not private; operations that return an internal collection; unused imports, fields or parameters; empty blocks; methods that are too long (the longest, `handleReturn`, has 29 lines); common or content coupling.
+| Item | bikeshare-poor | bikeshare-good |
+| --- | --- | --- |
+| Date | 2026-10-23 | 2026-10-23 |
+| AI tool and exact model | Gemini 3.8 Flash (code); Claude Sonnet 5.5 (review) | Gemini 3.8 Flash (code); Claude Sonnet 5.5 (review) |
+| Prompt (B or C as given, or your changed prompt in full) | Prompt B as given | Prompt C as given |
+| Builds with mvn package (yes or no) | yes | yes |
+| Number of classes, interfaces, enums and records | 1 (1 class) | 9 (6 classes, 1 interface, 2 enums) |
+| SonarQube issues, total | 38 | 27 |
+| SonarQube issues, by rule | java:S106 x 30, java:S7467 x 3, java:S2386 x 2, java:S125 x 1, java:S1172 x 1, java:S3776 x 1 | java:S106 x 25, java:S7467 x 1, java:S1172 x 1 |
+| AI review findings in Check 1 | 5 | 4 |
+| AI review findings in Check 2 | 9 | 5 |
+| Review output file in the reviews folder | reviews/bikeshare-poor-review.md | reviews/bikeshare-good-review.md |
 
 4.1 Did SonarQube report any cohesion or coupling problem in bikeshare-poor? Quote the rule and the message if it did.
-Answer: No. SonarQube reported only code-quality issues in bikeshare-poor and none of them is about cohesion or coupling. The poor design (one class that holds the menu, the fee rules, the bike records and the file saving, public static fields, int codes, a boolean flag) is not reported by any rule.
+
+No rule of SonarQube names a cohesion or a coupling problem in bikeshare-poor. It reported 38 code-quality issues (java:S106 x 30, java:S7467 x 3, java:S2386 x 2, java:S125 x 1, java:S1172 x 1, java:S3776 x 1). Two of them touch the poor design from the side. java:S3776, "Refactor this method to reduce its Cognitive Complexity from 23 to the 15 allowed", at BikeShareApp.java:62, points at the long method handleRideTransaction, but it measures how hard the method is to read and does not say that the method has two jobs. java:S2386, "Make this member "protected"", at lines 20 and 23, points at the public static maps STATIONS and ACTIVE_RENTALS, but it speaks about the visibility of a field and does not name common coupling. SonarQube did not report that one class holds the menu, the fee rules, the bike records and the file saving, that the boolean flag isRent decides what the method does, or that the member type is an int code.
+
+For comparison, SonarQube reported 27 issues in bikeshare-good, almost all of them java:S106 (25), and it also reported no cohesion or coupling problem there, so its list does not show which version has the better design.
 
 4.2 Did the AI review tell the two versions apart? Give one finding for bikeshare-poor that does not appear for bikeshare-good.
-Answer: Yes, the AI review told the two versions apart.  In bikeshare-poor it reported weak class cohesion, because one class holds the menu, the fee rules, the bike records and the file saving. For bikeshare-good it reported no weak cohesion and no non-private field, and its findings were small points such as the seven positional parameters of saveRide.
 
-4.3 Which version would you rather extend with a new member type, such as a visitor who pays 4 baht per minute, and why? 
-Answer: I would rather extend bikeshare-good. To add a visitor who pays 4 baht per minute, I only add one constant to the enum, VISITOR(4), in MemberType.java. The fee rule already lives in MemberType.calculateFee, and the menu and the service need no change except the text of the prompt. In bikeshare-poor the member type is an int code and the fee rules, the menu and the file saving are in one class, so I would have to find every place that tests the code (the menu, the fee calculation and the saving), add a new number, and check that I did not miss one. The good design keeps the fee rule in one place, so a new member type is a small change with a low chance of breaking other code.
+Yes, the AI review told the two versions apart. For bikeshare-poor it reported weak class cohesion (BikeShareApp.java:13-164), because one class holds the menu, the inventory, the rental records, the fee rule, the receipt and the CSV saving. For bikeshare-good it reported no weak class cohesion, no procedural or weaker method cohesion, no control coupling and no non-private field, and its findings were small points such as the seven positional parameters of saveRide. Other findings that appear only for bikeshare-poor are the boolean flag isRent (control coupling), the public static maps (common coupling) and the int codes for the member type (connascence of convention).
+
+4.3 Which version would you rather extend with a new member type, such as a visitor who pays 4 baht per minute, and why?
+
+I would rather extend bikeshare-good. To add a visitor who pays 4 baht per minute, I only add one constant to the enum, VISITOR(4), in MemberType.java. The fee rule already lives in MemberType.calculateFee, and the menu and the service need no change except the text of the prompt. In bikeshare-poor the member type is an int code and the fee rules, the menu and the file saving are in one class, so I would have to find every place that tests the code, add a new number, and check that I did not miss one. The good design keeps the fee rule in one place, so a new member type is a small change with a low chance of breaking other code.
 
 ## Task 5. Reflection
 
@@ -172,8 +174,8 @@ Answer: In Project Phase 2 I will run SonarQube while I write the code and fix t
 ## AI usage declaration
 
 | AI tool and exact model | Purpose | Files or parts that it produced or changed | How you checked its output |
-| AI tool and exact model | Purpose | Files or parts that it produced or changed | How you checked its output |
 | --- | --- | --- | --- |
-| Gemini 3.8 Flash | Review of ParcelPoint with Prompt A (Task 2) | reviews/parcelpoint-review.md | Opened each file at the line given, compared with the code, SonarQube and the program output |
+| Gemini 3.8 Flash | Review of ParcelPoint with Prompt A (Task 2) | reviews/parcelpoint-review.md | Opened each file at the line given and compared with the code, SonarQube and the program output |
 | Gemini 3.8 Flash | Wrote the BikeShare code with Prompts B and C (Task 4) | bikeshare-poor, bikeshare-good | Ran mvn package and the program, and read the code |
-| Claude Sonnet 5.5 | Review of bikeshare-good with Prompt A (Task 4); help with setup, fixes and the wording of the report | reviews/bikeshare-good-review.md (and reviews/bikeshare-poor-review.md ถ้าให้ Claude รีวิว poor); code fixes in parcelpoint and report text | Built and ran the program after every fix, checked the line numbers and findings against the files |
+| Claude Sonnet 5.5 | Review of bikeshare-poor and bikeshare-good with Prompt A (Task 4) | reviews/bikeshare-poor-review.md, reviews/bikeshare-good-review.md | Compared the line numbers and findings with the files; note: these reviews were made in the same chat that helped with this lab, not in a new chat |
+| Claude Sonnet 5.5 | Help with tool setup, code fixes in parcelpoint and the wording of this report | parcelpoint fixes (Task 3), text of LAB_REPORT.md | Built and ran the program after every fix and checked the SonarQube result |

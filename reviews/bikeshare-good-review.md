@@ -1,0 +1,19 @@
+1. Files read: `bikeshare-good/src/main/java/com/bikeshare/App.java`, `Bike.java`, `BikeShareService.java`, `CliMenu.java`, `CsvRideRepository.java`, `MemberType.java`, `Rental.java`, `RideRepository.java`, `Station.java`.
+
+2.
+
+| No. | Check | Code location (file:line) | Finding | Severity | Suggested fix |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Check 1 | App.java:10 | The `Scanner` on System.in is never closed (resource leak warning). | Note | Wrap it in try-with-resources, or keep it open on purpose and add a comment. |
+| 2 | Check 1 | CsvRideRepository.java:27 | The member ID typed by the user is written to rides.csv without escaping, so an ID with a comma or a new line breaks the columns of the file (probable bug). | Should fix | Reject or quote IDs that contain a comma, a quote or a new line. |
+| 3 | Check 1 | CliMenu.java:43, 46, 69 | A wrong station or member type makes `valueOf` fail, and the catch blocks at lines 51 and 81 show Java's raw message ("No enum constant com.bikeshare.Station.X") to the user. | Note | Catch the error at each `valueOf` and print "Unknown station" or "Unknown member type" with the allowed values. |
+| 4 | Check 1 | CliMenu.java:40; BikeShareService.java:31 | An empty member ID is accepted, so a rental can be stored under an empty string. | Note | Reject a blank member ID in `rentBike`. |
+| 5 | Check 2 | RideRepository.java:6; BikeShareService.java:56-64; CsvRideRepository.java:18 | `saveRide` takes seven positional parameters, so a change of order or count must be made in three places (connascence of position). The member type and the stations are passed as Strings through `name()`, which drops the enum type (connascence of type). | Should fix | Pass one `Ride` record instead of seven loose values. |
+| 6 | Check 2 | BikeShareService.java:54, 57, 59, 62 | The service reaches through `Rental` with `rental.getBike().getId()` and `rental.getMemberType().calculateFee(...)`, which is strong coupling. | Note | Add `getBikeId()` and `calculateFee()` to `Rental`. |
+| 7 | Check 2 | CliMenu.java:62, 74 | The menu fetches the whole `Rental` (stamp coupling) only to read the bike ID through `rental.getBike().getId()`. It checks for an active rental although `returnBike` checks it again (BikeShareService.java:48-51), and it depends on five classes (BikeShareService, Rental, Bike, MemberType, Station). | Should fix | Let `returnBike` return a small result with the bike ID and the fee, so the menu needs neither `getActiveRental` nor `Rental`. |
+| 8 | Check 2 | CliMenu.java:42, 45, 68 | Station names and member type names are typed by hand in the prompts ("LIBRARY / CANTEEN / DORM", "STUDENT / STAFF") and repeat the enums, so a new station or member type also needs these strings edited (connascence of convention). | Should fix | Build the prompt text from `Station.values()` and `MemberType.values()`. |
+| 9 | Check 2 | RideRepository.java:3, 6; CliMenu.java:82-83 | The interface declares `IOException`, so the file detail leaks to `returnBike` (BikeShareService.java:44) and to the menu. The menu message hard-codes "rides.csv" although App.java:8 chooses the file name (connascence of meaning). | Note | Wrap the error in an own exception and let the repository name the file. |
+
+3. Number of findings: Check 1: 4. Check 2: 5.
+
+Not found: methods with procedural or weaker cohesion; classes with weak class cohesion; fields that are not private; operations that return an internal collection; unused imports, fields or parameters; empty blocks; methods that are too long (the longest, `handleReturn`, has 29 lines); common or content coupling.
